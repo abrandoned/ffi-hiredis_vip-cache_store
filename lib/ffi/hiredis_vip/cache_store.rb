@@ -8,6 +8,7 @@
 ##
 require "ffi/hiredis_vip/cache_store/version"
 require "active_support"
+require "connection_pool"
 require "ffi/hiredis_vip"
 
 module FFI
@@ -18,6 +19,8 @@ module FFI
         attr_reader :database, :host, :port
 
         def initialize(address)
+          address = address.dup
+          address.delete!("redis://")
           @host = address.split(":").first
           port_and_db = address.split(":").last
           @port = port_and_db.split("/").first
