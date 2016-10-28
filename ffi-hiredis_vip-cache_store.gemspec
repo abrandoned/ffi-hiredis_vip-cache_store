@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{ an ActiveSupport CacheStore for HiredisVip }
   spec.description   = %q{ using HiredisVip as an ActiveSupport CacheStore .... most of this is from redis-activesupport }
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.homepage      = "https://github.com/abrandoned/ffi-hiredis_vip-cache_store"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
