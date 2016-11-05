@@ -40,7 +40,8 @@ module FFI
         #   FFI::HiredisVip::CacheStore::Store.new "localhost:6379/0", "localhost:6380/0", pool_size: 5, pool_timeout: 10
         #     # => use a ConnectionPool
         def initialize(*addresses)
-          @options = addresses.dup.extract_options!
+          addresses = addresses.dup
+          @options = addresses.extract_options!
           addresses = addresses.map(&:dup)
 
           if addresses.empty?

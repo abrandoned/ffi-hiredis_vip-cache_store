@@ -23,9 +23,9 @@ describe FFI::HiredisVip::CacheStore do
   end
 
   it "connects using an hash of options" do
-    address = { host: '127.0.0.1', port: '6380', db: '1' }
+    address = { host: '127.0.0.1', port: '6379' }
     store = FFI::HiredisVip::CacheStore::Store.new(address.merge(pool_size: 5, pool_timeout: 10))
-    redis = Redis.new(url: "redis://127.0.0.1:6380/1")
+    redis = FFI::HiredisVip::Client.new(:host => "127.0.0.1", :port => 6379)
     redis.flushall
 
     store.connection_pool.class.must_equal(::ConnectionPool)
@@ -33,14 +33,13 @@ describe FFI::HiredisVip::CacheStore do
     store.connection_pool.instance_variable_get(:@timeout).must_equal(10)
 
     store.write("rabbit", 0)
-
-    redis.exists("rabbit").must_equal(true)
+    redis.exists?("rabbit").must_equal(true)
   end
 
   it "connects using an string of options" do
-    address = "redis://127.0.0.1:6380/1"
+    address = "redis://127.0.0.1:6379/1"
     store = FFI::HiredisVip::CacheStore::Store.new(address, pool_size: 5, pool_timeout: 10)
-    redis = Redis.new(url: address)
+    redis = FFI::HiredisVip::Client.new(:host => "127.0.0.1", :port => 6379, :db => "1")
     redis.flushall
 
     store.connection_pool.class.must_equal(::ConnectionPool)
@@ -48,22 +47,19 @@ describe FFI::HiredisVip::CacheStore do
     store.connection_pool.instance_variable_get(:@timeout).must_equal(10)
 
     store.write("rabbit", 0)
-
-    redis.exists("rabbit").must_equal(true)
+    redis.exists?("rabbit").must_equal(true)
   end
 
   it "connects using the passed hash of options" do
-    address = { host: '127.0.0.1', port: '6380', db: '1' }.merge(pool_size: 5, pool_timeout: 10)
+    address = { host: '127.0.0.1', port: 6379, db: '1' }.merge(pool_size: 5, pool_timeout: 10)
     store = FFI::HiredisVip::CacheStore::Store.new(address)
-    redis = Redis.new(url: "redis://127.0.0.1:6380/1")
+    redis = FFI::HiredisVip::Client.new(:host => "127.0.0.1", :port => 6379, :db => "1")
     redis.flushall
-    address[:db] = '0' # Should not use this db
 
     store.connection_pool.class.must_equal(::ConnectionPool)
 
     store.write("rabbit", 0)
-
-    redis.exists("rabbit").must_equal(true)
+    redis.exists?("rabbit").must_equal(true)
   end
 
   it "raises an error if :pool isn't a pool" do
@@ -80,40 +76,6 @@ describe FFI::HiredisVip::CacheStore do
     store.write("white-rabbit", 0)
 
     redis.exists('cache-namespace:white-rabbit').must_equal(true)
-  end
-
-  it "creates a normal store when given no addresses" do
-    underlying_store = instantiate_store
-    underlying_store.must_be_instance_of(::Redis::Store)
-  end
-
-  it "creates a normal store when given options only" do
-    underlying_store = instantiate_store(:expires_in => 1.second)
-    underlying_store.must_be_instance_of(::Redis::Store)
-  end
-
-  it "creates a normal store when given a single address" do
-    underlying_store = instantiate_store("redis://127.0.0.1:6380/1")
-    underlying_store.must_be_instance_of(::Redis::Store)
-  end
-
-  it "creates a normal store when given a single address and options" do
-    underlying_store = instantiate_store("redis://127.0.0.1:6380/1",
-                                         { :expires_in => 1.second})
-    underlying_store.must_be_instance_of(::Redis::Store)
-  end
-
-  it "creates a distributed store when given multiple addresses" do
-    underlying_store = instantiate_store("redis://127.0.0.1:6380/1",
-                                         "redis://127.0.0.1:6381/1")
-    underlying_store.must_be_instance_of(::Redis::DistributedStore)
-  end
-
-  it "creates a distributed store when given multiple address and options" do
-    underlying_store = instantiate_store("redis://127.0.0.1:6380/1",
-                                         "redis://127.0.0.1:6381/1",
-                                         :expires_in => 1.second)
-    underlying_store.must_be_instance_of(::Redis::DistributedStore)
   end
 
   it "reads the data" do
@@ -162,13 +124,6 @@ describe FFI::HiredisVip::CacheStore do
       store.expire({ hkey: 'test' }, 1.second)
       sleep 2
       store.read({ hkey: 'test' }).must_be_nil
-    end
-  end
-
-  it "does't write data if :unless_exist option is true" do
-    with_store_management do |store|
-      store.write "rabbit", @white_rabbit, :unless_exist => true
-      store.read("rabbit").must_equal(@rabbit)
     end
   end
 
@@ -596,10 +551,6 @@ describe FFI::HiredisVip::CacheStore do
   end
 
   private
-    def instantiate_store(*addresses)
-      FFI::HiredisVip::CacheStore::Store.new(*addresses).instance_variable_get(:@data)
-    end
-
     def with_store_management
       yield @store
       yield @dstore
