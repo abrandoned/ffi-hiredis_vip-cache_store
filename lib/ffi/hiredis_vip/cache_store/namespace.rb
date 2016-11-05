@@ -52,8 +52,10 @@ module FFI
         end
 
         def mget(*keys)
+          response = []
           options = (keys.pop if keys.last.is_a? Hash) || {}
-          super(*keys.map {|key| interpolate(key) }) if keys.any?
+          response = super(*keys.map {|key| interpolate(key) }) if keys.any?
+          response
         end
 
         def expire(key, ttl)

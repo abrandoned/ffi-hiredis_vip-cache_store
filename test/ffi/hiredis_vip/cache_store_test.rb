@@ -62,12 +62,6 @@ describe FFI::HiredisVip::CacheStore do
     redis.exists?("rabbit").must_equal(true)
   end
 
-  it "raises an error if :pool isn't a pool" do
-    assert_raises(RuntimeError, 'pool must be an instance of ConnectionPool') do
-      FFI::HiredisVip::CacheStore::Store.new(pool: 'poolio')
-    end
-  end
-
   it "namespaces all operations" do
     address = "redis://127.0.0.1:6379/1/cache-namespace"
     store   = FFI::HiredisVip::CacheStore::Store.new(address)
@@ -499,54 +493,31 @@ describe FFI::HiredisVip::CacheStore do
   describe "raise_errors => true" do
     def setup
       @raise_error_store = FFI::HiredisVip::CacheStore::Store.new("redis://127.0.0.1:6380/1", :raise_errors => true)
-      @raise_error_store.stubs(:with).raises(Redis::CannotConnectError)
+      @raise_error_store.stubs(:with).raises(FFI::HiredisVip::Core::ConnectionError)
     end
 
     it "raises on read when redis is unavailable" do
-      assert_raises(Redis::CannotConnectError) do
+      assert_raises(FFI::HiredisVip::Core::ConnectionError) do
         @raise_error_store.read("rabbit")
       end
     end
 
     it "raises on writes when redis is unavailable" do
-      assert_raises(Redis::CannotConnectError) do
+      assert_raises(FFI::HiredisVip::Core::ConnectionError) do
         @raise_error_store.write "rabbit", @white_rabbit, :expires_in => 1.second
       end
     end
 
     it "raises on delete when redis is unavailable" do
-      assert_raises(Redis::CannotConnectError) do
+      assert_raises(FFI::HiredisVip::Core::ConnectionError) do
         @raise_error_store.delete "rabbit"
       end
     end
 
     it "raises on delete_matched when redis is unavailable" do
-      assert_raises(Redis::CannotConnectError) do
+      assert_raises(FFI::HiredisVip::Core::ConnectionError) do
         @raise_error_store.delete_matched "rabb*"
       end
-    end
-  end
-
-  describe "raise_errors => false" do
-    def setup
-      @raise_error_store = FFI::HiredisVip::CacheStore::Store.new("redis://127.0.0.1:6380/1")
-      @raise_error_store.stubs(:with).raises(Redis::CannotConnectError)
-    end
-
-    it "is nil when redis is unavailable" do
-      @raise_error_store.read("rabbit").must_be_nil
-    end
-
-    it "returns false when redis is unavailable" do
-      @raise_error_store.write("rabbit", @white_rabbit, :expires_in => 1.second).must_equal(false)
-    end
-
-    it "returns false when redis is unavailable" do
-      @raise_error_store.delete("rabbit").must_equal(false)
-    end
-
-    it "raises on delete_matched when redis is unavailable" do
-      @raise_error_store.delete_matched("rabb*").must_equal(false)
     end
   end
 
