@@ -69,13 +69,13 @@ describe FFI::HiredisVip::CacheStore do
   end
 
   it "namespaces all operations" do
-    address = "redis://127.0.0.1:6380/1/cache-namespace"
+    address = "redis://127.0.0.1:6379/1/cache-namespace"
     store   = FFI::HiredisVip::CacheStore::Store.new(address)
-    redis   = Redis.new(url: address)
+    redis = FFI::HiredisVip::Client.new(:host => "127.0.0.1", :port => 6379, :db => "1")
 
     store.write("white-rabbit", 0)
 
-    redis.exists('cache-namespace:white-rabbit').must_equal(true)
+    redis.exists?('cache-namespace:white-rabbit').must_equal(true)
   end
 
   it "reads the data" do

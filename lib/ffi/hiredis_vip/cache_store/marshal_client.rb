@@ -1,9 +1,12 @@
 require "ffi/hiredis_vip"
+require "ffi/hiredis_vip/cache_store/namespace"
 
 module FFI
   module HiredisVip
     module CacheStore
       class MarshalClient < ::FFI::HiredisVip::Client
+        include FFI::HiredisVip::CacheStore::Namespace
+
         def set(key, value, options = nil)
           _marshal(value, options) { |v| super encode(key), encode(v), options }
         end

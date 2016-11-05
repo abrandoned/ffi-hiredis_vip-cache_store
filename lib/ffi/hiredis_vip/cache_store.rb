@@ -48,6 +48,7 @@ module FFI
             addresses << "#{options[:host] || 'localhost'}"
             addresses.last << ":#{options[:port] || 6379}"
             addresses.last << "/#{options[:db]}" if options[:db]
+            addresses.last << "/#{options[:namespace]}" if options[:namespace]
           end
 
           # Only going to allow pooled connections
@@ -60,6 +61,7 @@ module FFI
             connection_options[:host] = address.host
             connection_options[:port] = address.port
             connection_options[:db] = address.database if address.database && address.database != "0"
+            connection_options[:namespace] = @options[:namespace] = address.namespace if address.namespace
 
             ::FFI::HiredisVip::CacheStore::MarshalClient.new(connection_options)
           }
