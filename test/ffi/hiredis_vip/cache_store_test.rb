@@ -22,6 +22,12 @@ describe FFI::HiredisVip::CacheStore do
     end
   end
 
+  it "get connection error when cannot connect" do
+    assert_raises(FFI::HiredisVip::Core::ConnectionError) do
+      FFI::HiredisVip::Client.new(:host => "127.0.0.999", :port => 6379)
+    end
+  end
+
   it "connects using an hash of options" do
     address = { host: '127.0.0.1', port: '6379' }
     store = FFI::HiredisVip::CacheStore::Store.new(address.merge(pool_size: 5, pool_timeout: 10))
